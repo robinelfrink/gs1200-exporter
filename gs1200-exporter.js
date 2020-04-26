@@ -18,23 +18,23 @@ const port = 'GS1200_PORT' in process.env ? process.env.GS1200_PORT : 9707;
 const password = process.env.GS1200_PASSWORD;
 
 const num_ports_gauge = new Gauge({
-        name: 'num_ports',
+        name: 'gs1200_num_ports',
         help: 'Number of ports. Mainly a placeholder for system information.',
         labelNames: ['model', 'firmware', 'ip', 'mac', 'loop']
 });
 
 const speed_gauge = new Gauge({
-        name: 'speed',
+        name: 'gs1200_speed',
         help: 'Port speed in Mbps.',
         labelNames: ['port', 'status', 'loop']
 });
 const tx_gauge = new Gauge({
-        name: 'packets_tx',
+        name: 'gs1200_packets_tx',
         help: 'Number of packets transmitted.',
         labelNames: ['port']
 });
 const rx_gauge = new Gauge({
-        name: 'packets_rx',
+        name: 'gs1200_packets_rx',
         help: 'Number of packets received.',
         labelNames: ['port']
 });
