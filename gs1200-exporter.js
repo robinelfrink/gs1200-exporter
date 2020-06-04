@@ -1,5 +1,7 @@
 'use strict';
 
+require('log-timestamp');
+
 const axios = require('axios');
 const prometheus = require('prom-client');
 const register = prometheus.register;
@@ -125,9 +127,11 @@ process.on('SIGINT', function() {
 });
 
 server.get('/metrics', async (req, res) => {
+    console.log(" Metrics request from %s.", req.headers['x-forwarded-for'] || req.ip);
     await getMetrics();
     res.set('Content-Type', register.contentType);
     res.end(register.metrics());
 });
 
+console.log("Starting gs1200-exporter.");
 server.listen(port);
