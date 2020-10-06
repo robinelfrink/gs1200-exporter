@@ -29,7 +29,7 @@ jobs:
         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       run: |
         docker buildx build \
-          --platform linux/amd64,linux/arm/v7,linux/arm64,linux/ppc64le \
+          --platform linux/amd64,linux/arm/v7,linux/arm64 \
           --output "type=image,push=true" \
           --tag "${DOCKER_USERNAME}/gs1200-exporter:latest" \
           --tag "${DOCKER_USERNAME}/gs1200-exporter:${{ steps.tag.outputs.tag }}" \
