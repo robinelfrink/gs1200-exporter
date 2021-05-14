@@ -41,7 +41,7 @@ $ docker run \
     --publish 9707:9707 \
     --env GS1200_ADDRESS=192.168.1.3 \
     --env GS1200_PASSWORD=1234 \
-    wobin/gs1200-exporter:latest
+    ghcr.io/robinelfrink/gs1200-exporter:latest
 ```
 
 ## Running with Docker Compose
@@ -53,7 +53,7 @@ version: '3'
 services:
   gs1200-exporter:
     container_name: gs1200-exporter
-    image: wobin/gs1200-exporter:latest
+    image: ghcr.io/robinelfrink/gs1200-exporter:latest
     environment:
       - GS1200_ADDRESS=192.168.1.3
       - GS1200_PASSWORD=1234
