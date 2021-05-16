@@ -26,9 +26,10 @@ The script is configured by setting environment variables prior to running:
 Example:
 
 ```shell
+$ go build
 $ export GS1200_ADDRESS=192.168.1.3
 $ export GS1200_PASSWORD=1234
-$ node gs1200-exporter.js
+$ ./gs1200-exporter
 ```
 
 ## Running with Docker

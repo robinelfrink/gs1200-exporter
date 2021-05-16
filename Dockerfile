@@ -1,16 +1,15 @@
-FROM node:12-alpine AS BUILD
-WORKDIR /usr/src/app
-COPY package*.json ./
-COPY gs1200-exporter.js ./
-RUN npm install --only=production
-RUN npm prune --production
+FROM golang:1.16 AS BUILD
+WORKDIR /app
+COPY . .
+RUN CGO_ENABLED=0 go build -ldflags="-w -s" .
 
-FROM node:12-alpine
-COPY --from=BUILD /usr/src/app /
+FROM scratch
+WORKDIR /app
+COPY --from=BUILD /app/gs1200-exporter /app
 
 ENV GS1200_ADDRESS 192.168.1.3
 ENV GS1200_PASSWORD 1234
 ENV GS1200_PORT 9707
 
 EXPOSE $GS1200_PORT
-CMD [ "node", "gs1200-exporter.js" ]
+CMD [ "/app/gs1200-exporter" ]
