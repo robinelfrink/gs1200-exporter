@@ -11,7 +11,7 @@ import (
     "os"
     "strconv"
     "strings"
-    "github.com/dop251/goja"
+    "github.com/robertkrimen/otto"
     "github.com/prometheus/client_golang/prometheus"
     "github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -71,12 +71,14 @@ func getEnv(key, fallback string) string {
 
 type Exporter struct {
     address, password string
+    vm *otto.Otto
 }
 
 func GS1200Exporter(address string, password string) *Exporter {
     return &Exporter {
         address: address,
         password: password,
+        vm: otto.New(),
     }
 }
 
@@ -86,6 +88,26 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
     ch <- speed_metric
     ch <- tx_metric
     ch <- rx_metric
+}
+
+func (e *Exporter) GetValue(name string) otto.Value {
+    value, _ := e.vm.Get(name)
+    return value
+}
+
+func (e *Exporter) GetFloat(name string) float64 {
+    value, _ := e.GetValue(name).ToFloat()
+    return value
+}
+
+func (e *Exporter) GetString(name string) string {
+    value, _ := e.GetValue(name).ToString()
+    return value
+}
+
+func (e *Exporter) GetInt(name string) int {
+    value, _ := e.GetValue(name).ToInteger()
+    return int(value)
 }
 
 func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
@@ -126,56 +148,50 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
     // Clear the session.
     client.Get("http://"+e.address+"/logout.html")
 
-    // Run the javascript code so we can access the data.
-    vm := goja.New()
-    _, err = vm.RunString(js)
-    if err != nil {
-        fmt.Println("Error:", err)
-        return
-    }
+    // Parse the javascript code so we can access the data.
+    e.vm.Run(js)
 
     // Report system info, using the static number of ports as metrics.
     ch <- prometheus.MustNewConstMetric(num_ports_metric, prometheus.GaugeValue,
-        vm.Get("Max_port").ToFloat(),
-        vm.Get("model_name").String(),
-        vm.Get("sys_fmw_ver").String(),
-        vm.Get("sys_IP").String(),
-        vm.Get("sys_MAC").String(),
-        vm.Get("loop").String())
-
-    // Fetch all per-port data.
-    portstatus := vm.Get("portstatus").ToObject(vm)
-    loop_status := vm.Get("loop_status").ToObject(vm)
-    speed := vm.Get("speed").ToObject(vm)
-    stats := vm.Get("Stats").ToObject(vm)
-    qvlans := vm.Get("qvlans").ToObject(vm)
+        e.GetFloat("Max_port"),
+        e.GetString("model_name"),
+        e.GetString("sys_fmw_ver"),
+        e.GetString("sys_IP"),
+        e.GetString("sys_MAC"),
+        e.GetString("loop"))
 
     // Loop over ports.
-    for i := 1; int64(i) <= vm.Get("Max_port").ToInteger(); i++ {
+    qvlans, _ := e.GetValue("qvlans").Export()
+    speeds, _ := e.GetValue("speed").Export()
+    portstatuses, _ := e.GetValue("portstatus").Export()
+    loop_statuses, _ := e.GetValue("loop_status").Export()
+    statses, _ := e.GetValue("Stats").Export()
+    for i := 1; i <= e.GetInt("Max_port"); i++ {
         var pvlan = "0"
         var vlans []string
         // Loop over configured vlans.
-        for _, j := range qvlans.Keys() {
-            qvlan := qvlans.Get(j).ToObject(vm)
-            if (qvlan.Get("1").ToInteger() >> (i-1)) & 1 > 0 {
+        for _, qvlan := range qvlans.([][]string) {
+            flag1, _ := strconv.ParseInt(strings.Replace(qvlan[1], "0x", "", -1), 16, 64)
+            if (flag1 >> (i-1)) & 1 > 0 {
                 // Current vlan is connected to current port.
-                if (qvlan.Get("2").ToInteger() >> (i-1)) & 1 > 0 {
+                flag2, _ := strconv.ParseInt(strings.Replace(qvlan[2], "0x", "", -1), 16, 64)
+                if (flag2 >> (i-1)) & 1 > 0 {
                     // Tagged
-                    vlans = append(vlans, qvlan.Get("0").String())
+                    vlans = append(vlans, string(qvlan[0]))
                 } else {
                     // Untagged
-                    pvlan = qvlan.Get("0").String()
+                    pvlan = string(qvlan[0])
                 }
             }
         }
 
         // Port speed seems to always be "[num] Mbps".
-        speed, _ := strconv.Atoi(strings.ReplaceAll(speed.Get(strconv.Itoa(i-1)).String(), " Mbps", ""))
+        speed, _ := strconv.Atoi(strings.ReplaceAll(speeds.([]string)[i-1], " Mbps", ""))
         ch <- prometheus.MustNewConstMetric(speed_metric, prometheus.GaugeValue,
             float64(speed),
             "port "+strconv.Itoa(i),
-            portstatus.Get(strconv.Itoa(i-1)).String(),
-            loop_status.Get(strconv.Itoa(i-1)).String(),
+            portstatuses.([]string)[i-1],
+            loop_statuses.([]string)[i-1],
             pvlan,
             strings.Join(vlans, ","))
 
@@ -186,19 +202,19 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
         //   rx = Stats[k][6]+Stats[k][7]+Stats[k][8]+Stats[k][10];
         //   tx = parseFloat(tx).toLocaleString(); //Divide the numbers with commas
         //   rx = parseFloat(rx).toLocaleString();
-        portstats := stats.Get(strconv.Itoa(i-1)).ToObject(vm)
+        stats := statses.([][]interface {})[i-1]
         ch <- prometheus.MustNewConstMetric(tx_metric, prometheus.CounterValue,
-            portstats.Get("1").ToFloat() + portstats.Get("2").ToFloat() + portstats.Get("3").ToFloat(),
+            float64(stats[1].(int64) + stats[2].(int64) + stats[3].(int64)),
             "port "+strconv.Itoa(i))
         ch <- prometheus.MustNewConstMetric(rx_metric, prometheus.CounterValue,
-            portstats.Get("6").ToFloat() + portstats.Get("7").ToFloat() + portstats.Get("8").ToFloat() + portstats.Get("10").ToFloat(),
+            float64(stats[6].(int64) + stats[7].(int64) + stats[8].(int64) + stats[10].(int64)),
             "port "+strconv.Itoa(i))
     }
 
     // Report number of configured vlans.
     var vlans []string
-    for _, j := range qvlans.Keys() {
-        vlans = append(vlans, qvlans.Get(j).ToObject(vm).Get("0").String())
+    for _, qvlan := range qvlans.([][]string) {
+        vlans = append(vlans, qvlan[0])
     }
     ch <- prometheus.MustNewConstMetric(num_vlans_metric, prometheus.GaugeValue,
         float64(len(vlans)),
