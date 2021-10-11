@@ -121,13 +121,15 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
     // will simply send an empty response, making it impossible
     // to do proper error-handling.
     client := &http.Client{Jar: jar}
-    _, err = client.PostForm("http://"+e.address+"/login.cgi",
+    resp, err := client.PostForm("http://"+e.address+"/login.cgi",
         url.Values{"password": {e.password}})
     if err != nil {
+        defer resp.Body.Close()
         fmt.Println("Error:", err)
         // Even though logging in failed, try to log out, clearing the
         // session.
-        client.Get("http://"+e.address+"/logout.html")
+        resp, _ := client.Get("http://"+e.address+"/logout.html")
+        defer resp.Body.Close()
         return
     }
 
@@ -137,8 +139,10 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
     for _, src := range []string{"system_data.js", "link_data.js", "VLAN_1Q_List_data.js"} {
         resp, err := client.Get("http://"+e.address+"/"+src)
         if err != nil {
+            defer resp.Body.Close()
             fmt.Println("Error:", err)
-            client.Get("http://"+e.address+"/logout.html")
+            resp, _ = client.Get("http://"+e.address+"/logout.html")
+            defer resp.Body.Close()
             return
         }
         defer resp.Body.Close()
@@ -146,7 +150,8 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
         js = js+"\n"+string(body)
     }
     // Clear the session.
-    client.Get("http://"+e.address+"/logout.html")
+    resp, err = client.Get("http://"+e.address+"/logout.html")
+    defer resp.Body.Close()
 
     // Parse the javascript code so we can access the data.
     e.vm.Run(js)
