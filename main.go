@@ -5,6 +5,7 @@ import (
     "fmt"
     "io/ioutil"
     "log"
+    "math/rand"
     "net/http"
     "net/http/cookiejar"
     "net/url"
@@ -110,19 +111,60 @@ func (e *Exporter) GetInt(name string) int {
     return int(value)
 }
 
+func (e *Exporter) EncryptPassword(password string) string {
+    const letters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    bytes := []byte(password)
+    result := ""
+    for i := 0; i <= len(bytes); i++ {
+        result = result + string(letters[rand.Intn(len(letters))])
+        if i < len(bytes) {
+            result = result + string(int(bytes[i]) - len(bytes))
+        }
+    }
+    return result
+}
+
+func (e *Exporter) FetchAndParse(client *http.Client, filename string) {
+    resp, err := client.Get("http://"+e.address+"/"+filename)
+    if err != nil {
+        defer resp.Body.Close()
+        fmt.Println("Error:", err)
+        resp, _ = client.Get("http://"+e.address+"/logout.html")
+        defer resp.Body.Close()
+        return
+    }
+    defer resp.Body.Close()
+    body, err := ioutil.ReadAll(resp.Body)
+    e.vm.Run(string(body))
+    return
+}
+
 func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
     jar, err := cookiejar.New(nil)
     if err != nil {
         fmt.Println("Error:", err)
         return
     }
+    client := &http.Client{Jar: jar}
+
+    e.FetchAndParse(client, "system_data.js")
+    Max_port := e.GetInt("Max_port")
+    model_name := e.GetString("model_name")
+    sys_fmw_ver := e.GetString("sys_fmw_ver")
+    sys_IP := e.GetString("sys_IP")
+    sys_MAC := e.GetString("sys_MAC")
+    loop := e.GetString("loop")
+    loop_statuses, _ := e.GetValue("loop_status").Export()
 
     // Log in on the GS1200. If another user is logged on the device
     // will simply send an empty response, making it impossible
     // to do proper error-handling.
-    client := &http.Client{Jar: jar}
+    pass := e.password
+    if sys_fmw_ver != "V2.00(ABME.0)C0" {
+	pass = e.EncryptPassword(e.password)
+    }
     resp, err := client.PostForm("http://"+e.address+"/login.cgi",
-        url.Values{"password": {e.password}})
+        url.Values{"password": {pass}})
     if err != nil {
         defer resp.Body.Close()
         fmt.Println("Error:", err)
@@ -134,44 +176,24 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
     }
 
     // Fetch the javascript files containing all the data.
-    // See the samples folder for samples.
-    js := ""
-    for _, src := range []string{"system_data.js", "link_data.js", "VLAN_1Q_List_data.js"} {
-        resp, err := client.Get("http://"+e.address+"/"+src)
-        if err != nil {
-            defer resp.Body.Close()
-            fmt.Println("Error:", err)
-            resp, _ = client.Get("http://"+e.address+"/logout.html")
-            defer resp.Body.Close()
-            return
-        }
-        defer resp.Body.Close()
-        body, err := ioutil.ReadAll(resp.Body)
-        js = js+"\n"+string(body)
-    }
+    e.FetchAndParse(client, "link_data.js")
+    portstatuses, _ := e.GetValue("portstatus").Export()
+    speeds, _ := e.GetValue("speed").Export()
+    statses, _ := e.GetValue("Stats").Export()
+
+    e.FetchAndParse(client, "VLAN_1Q_List_data.js")
+    qvlans, _ := e.GetValue("qvlans").Export()
+
     // Clear the session.
     resp, err = client.Get("http://"+e.address+"/logout.html")
     defer resp.Body.Close()
 
-    // Parse the javascript code so we can access the data.
-    e.vm.Run(js)
-
     // Report system info, using the static number of ports as metrics.
     ch <- prometheus.MustNewConstMetric(num_ports_metric, prometheus.GaugeValue,
-        e.GetFloat("Max_port"),
-        e.GetString("model_name"),
-        e.GetString("sys_fmw_ver"),
-        e.GetString("sys_IP"),
-        e.GetString("sys_MAC"),
-        e.GetString("loop"))
+        float64(Max_port), model_name, sys_fmw_ver, sys_IP, sys_MAC, loop)
 
     // Loop over ports.
-    qvlans, _ := e.GetValue("qvlans").Export()
-    speeds, _ := e.GetValue("speed").Export()
-    portstatuses, _ := e.GetValue("portstatus").Export()
-    loop_statuses, _ := e.GetValue("loop_status").Export()
-    statses, _ := e.GetValue("Stats").Export()
-    for i := 1; i <= e.GetInt("Max_port"); i++ {
+    for i := 1; i <= Max_port; i++ {
         var pvlan = "0"
         var vlans []string
         // Loop over configured vlans.
