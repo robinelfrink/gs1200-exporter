@@ -10,6 +10,7 @@ import (
     "net/http/cookiejar"
     "net/url"
     "os"
+    "regexp"
     "strconv"
     "strings"
     "github.com/robertkrimen/otto"
@@ -160,7 +161,11 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
     // will simply send an empty response, making it impossible
     // to do proper error-handling.
     pass := e.password
-    if sys_fmw_ver != "V2.00(ABME.0)C0" {
+    r, _ := regexp.Compile(`^V(\d+\.\d+)\([A-Z]+\.(\d+)\)[A-Z]\d$`)
+    match := r.FindStringSubmatch(sys_fmw_ver)
+    version, _ := strconv.ParseFloat(match[1], 64)
+    revision, _ := strconv.Atoi(match[2])
+    if len(match) < 1 || (version >= 2 && revision >= 1) {
 	pass = e.EncryptPassword(e.password)
     }
     resp, err := client.PostForm("http://"+e.address+"/login.cgi",

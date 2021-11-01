@@ -1,8 +1,8 @@
-# Prometheus metrics exporter for the Zyxel GS1200-8
+# Prometheus metrics exporter for the Zyxel GS1200-5/GS1200-8
 
-The [Zyxel GS1200-8](https://www.zyxel.com/products_services/5-Port-8-Port-Web-Managed-Gigabit-Switch-GS1200-5-GS1200-8/)
-is a small and cheap managed switch, capable of handling 16Gbps across 8 ports,
-so say the specs.
+The [Zyxel GS1200-5/GS1200-8](https://www.zyxel.com/products_services/5-Port-8-Port-Web-Managed-Gigabit-Switch-GS1200-5-GS1200-8/)
+is a small and cheap managed switch, capable of handling 16Gbps across
+5 or 8 ports, so say the specs.
 
 Unfortunately the firmware does not implement SNMP or another standard for
 collecting port metrics.
@@ -19,7 +19,7 @@ The program can be configured by setting environment variables prior to running:
 
 | name              | required | description                            |
 |-------------------|----------|----------------------------------------|
-| `GS1200_ADDRESS`  | yes      | IP address of the GS1200-8             |
+| `GS1200_ADDRESS`  | yes      | IP address of the GS1200-5/GS1200-8    |
 | `GS1200_PASSWORD` | yes      | Password to log on with                |
 | `GS1200_PORT`     | no       | Port number to listen on, default 9707 |
 
