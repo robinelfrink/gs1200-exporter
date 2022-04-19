@@ -21,7 +21,7 @@ The program can be configured by setting environment variables prior to running:
 |-------------------|----------|----------------------------------------|
 | `GS1200_ADDRESS`  | yes      | IP address of the GS1200-5/GS1200-8    |
 | `GS1200_PASSWORD` | yes      | Password to log on with                |
-| `GS1200_PORT`     | no       | Port number to listen on, default 9707 |
+| `GS1200_PORT`     | no       | Port number to listen on, default 9934 |
 
 Example:
 
@@ -42,7 +42,7 @@ Usage of ./gs1200-exporter:
   -password string
         Password to log on to the GS1200 (default "********")
   -port string
-        Port on which to expose metrics. (default "9707")
+        Port on which to expose metrics. (default "9934")
 ```
 
 ## Running with Docker
@@ -52,7 +52,7 @@ $ docker run \
     --detach \
     --name gs1200-exporter \
     --rm \
-    --publish 9707:9707 \
+    --publish 9934:9934 \
     --env GS1200_ADDRESS=192.168.1.3 \
     --env GS1200_PASSWORD=1234 \
     ghcr.io/robinelfrink/gs1200-exporter:latest
@@ -72,5 +72,5 @@ services:
       - GS1200_ADDRESS=192.168.1.3
       - GS1200_PASSWORD=1234
     ports:
-      - 9707:9707
+      - 9934:9934
 ```
