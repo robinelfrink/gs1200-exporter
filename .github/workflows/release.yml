@@ -3,46 +3,60 @@ name: release
 
 on:
   push:
-    tags:
-    - 'v*'
+    branches:
+    - main
 
 
 jobs:
 
-
-  release:
-    name: Create release
+  tag:
+    name: Create version tag
     runs-on: ubuntu-latest
+    outputs:
+      changelog: ${{ steps.tag.outputs.changelog }}
+      tag: ${{ steps.tag.outputs.new_tag }}
+      version: ${{ steps.tag.outputs.new_version }}
     steps:
-
-    - name: Checkout
-      uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v3
+    - name: Bump version and tag
+      uses: mathieudutour/github-tag-action@v6.0
+      id: tag
       with:
-        fetch-depth: "0"
+        github_token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: List changes
-      id: changes
-      run: |
-        git fetch --tags --force
-        CHANGES="$(git log --oneline $(git describe --tags --abbrev=0 HEAD^)..HEAD --pretty=format:'- %h %s' --no-merges)"
-        CHANGES="${CHANGES//'%'/'%25'}"
-        CHANGES="${CHANGES//$'\n'/'%0A'}"
-        CHANGES="${CHANGES//$'\r'/'%0D'}"
-        echo "::set-output name=changes::${CHANGES}"
-
-    - name: Create release
-      id: release
-      uses: ncipollo/release-action@v1
+  containers:
+    name: Create containers
+    runs-on: ubuntu-latest
+    needs: tag
+    steps:
+    - name: Set up Docker buildx
+      uses: docker/setup-buildx-action@v1.6.0
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v1
       with:
-        allowUpdates: true
-        body: |
-          Changes in this release:
-          ${{ steps.changes.outputs.changes }}
-        token: ${{ secrets.GITHUB_TOKEN }}
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.REGISTRY_PAT }}
+    - name: Build and push containers
+      uses: docker/build-push-action@v2
+      with:
+        push: true
+        platforms: linux/amd64,linux/arm/v7,linux/arm64
+        tags: |
+          ghcr.io/${{ github.repository }}:latest
+          ghcr.io/${{ github.repository }}:${{ needs.tag.outputs.tag }}
+        labels: |
+          org.opencontainers.image.title=${{ github.event.repository.name }}
+          org.opencontainers.image.description=${{ github.event.repository.description }}
+          org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          org.opencontainers.image.version=${{ needs.tag.outputs.tag }}
+          org.opencontainers.image.revision=${{ github.sha }}
 
   binaries:
     name: Create binaries
     runs-on: ubuntu-latest
+    needs: tag
     strategy:
       matrix:
         goos: [linux, windows, darwin]
@@ -58,57 +72,49 @@ jobs:
           goarch: "386"
         - goos: darwin
           goarch: arm
-    needs: release
-
     steps:
-
-    - name: Checkout
-      uses: actions/checkout@v2
-
-    - name: Build and release artifacts
-      uses: wangyoucao577/go-release-action@v1.25
+    - name: Checkout code
+      uses: actions/checkout@v3
+    - name: Setup Go
+      uses: WillAbides/setup-go-faster@v1.7.0
+      with:
+        go-version: '1.16'
+    - name: Build binaries
       env:
-        GOARM: 7
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+        BINARY: ${{ github.event.repository.name }}-${{ needs.tag.outputs.tag }}-${{ matrix.goos }}-${{ matrix.goarch }}
+      run: |
+        go build -o ${BINARY}
+    - name: Save artifact
+      uses: actions/upload-artifact@v3
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        goos: ${{ matrix.goos }}
-        goarch: ${{ matrix.goarch }}
-        goversion: 1.16
-        sha256sum: true
-        extra_files: LICENSE README.md
+        name: binaries
+        path: ${{ github.event.repository.name }}-v*-*-*
+        retention-days: 1
 
-  container:
-    name: Create Docker containers
+  release:
+    name: Create release
     runs-on: ubuntu-latest
+    needs:
+    - tag
+    - binaries
+    - containers
     steps:
-
-    - name: Checkout
-      uses: actions/checkout@v2
-
-    - name: Fetch tag name
-      id: tag
-      run: echo ::set-output name=tag::$(echo ${GITHUB_REF:10})
-
-    - name: Set up QEMU for multiarch build
-      uses: docker/setup-qemu-action@v1
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1.6.0
-
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v1
+    - name: Fetch binaries
+      uses: actions/download-artifact@v3
       with:
-        registry: ghcr.io
-        username: ${{ github.repository_owner }}
-        password: ${{ secrets.REGISTRY_PAT }}
-
-    - name: Build and push containers
-      uses: docker/build-push-action@v2
+        name: binaries
+    - name: Create checksums
+      run: |
+        sha256sum ${{ github.event.repository.name }}-v*-*-* | tee ${{ github.event.repository.name }}-${{ needs.tag.outputs.tag }}.sha256
+    - name: Create release
+      uses: softprops/action-gh-release@v1
       with:
-        push: true
-        platforms: linux/amd64,linux/arm/v7,linux/arm64
-        tags: |
-          ghcr.io/${{ github.repository }}:latest
-          ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.tag }}
-        labels: |
-          org.opencontainers.image.source=https://github.com/${{ github.repository }}
+        tag_name: ${{ needs.tag.outputs.tag }}
+        name: Release ${{ needs.tag.outputs.version }}
+        body: |
+          Changes in this release:
+          ${{ needs.tag.outputs.changelog }}
+          Docker image: ghcr.io/${{ github.repository }}:${{ needs.tag.outputs.tag }}
+        files: ${{ github.event.repository.name }}-v*-*-*,${{ github.event.repository.name }}-*.sha256
