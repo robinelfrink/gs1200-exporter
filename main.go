@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	listenPort = flag.String("port", "9707",
+	listenPort = flag.String("port", "9934",
 		"Port on which to expose metrics.")
 	gs1200Address = flag.String("address", "192.168.1.3",
 		"IP address or hostname of the GS1200")
