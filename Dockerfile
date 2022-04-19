@@ -1,7 +1,9 @@
-FROM golang:1.16 AS BUILD
+FROM --platform=$BUILDPLATFORM golang:1.16 AS BUILD
 WORKDIR /app
 COPY . .
-RUN CGO_ENABLED=0 go build -ldflags="-w -s" .
+ARG TARGETOS
+ARG TARGETARCH
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -ldflags="-w -s" .
 
 FROM scratch
 WORKDIR /app
