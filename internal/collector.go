@@ -130,11 +130,11 @@ func (c *Collector) Collect() (*SystemData, *[]PortData, error) {
 	}
 
 	// Fetch and parse the javascript files containing all the data.
-	c.FetchAndParse("link_data.js")
+	_ = c.FetchAndParse("link_data.js")
 	portstatus := c.GetArrayOfString("portstatus")
 	speed := c.GetArrayOfString("speed")
 	stats := c.GetArrayOfArrayOfInterface("Stats")
-	c.FetchAndParse("VLAN_1Q_List_data.js")
+	_ = c.FetchAndParse("VLAN_1Q_List_data.js")
 	vlans := c.GetArrayOfArrayOfString("qvlans")
 	if err != nil {
 		return nil, nil, err
@@ -200,7 +200,11 @@ func (c *Collector) FetchAndParse(filename string) error {
 		c.Logout()
 		return err
 	}
-	vm.Run(string(body))
+	_, err = vm.Run(string(body))
+	if err != nil {
+		c.Logout()
+		return err
+	}
 	return nil
 }
 
@@ -238,7 +242,11 @@ func (c *Collector) Login() error {
 		c.Logout()
 		return err
 	}
-	io.Copy(ioutil.Discard, resp.Body)
+	_, err = io.Copy(ioutil.Discard, resp.Body)
+	if err != nil {
+		c.Logout()
+		return err
+	}
 	return nil
 }
 
@@ -247,6 +255,9 @@ func (c *Collector) Logout() {
 	if err != nil {
 		fmt.Println("Warning:", err)
 	}
-	io.Copy(ioutil.Discard, resp.Body)
+	_, err = io.Copy(ioutil.Discard, resp.Body)
+	if err != nil {
+		fmt.Println("Warning:", err)
+	}
 	defer resp.Body.Close()
 }
