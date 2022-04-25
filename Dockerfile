@@ -3,7 +3,8 @@ WORKDIR /app
 COPY . .
 ARG TARGETOS
 ARG TARGETARCH
-RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -ldflags="-w -s" .
+ARG VERSION=development
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -ldflags="-w -s -X 'main.Version=${VERSION}'" .
 
 FROM scratch
 WORKDIR /app
