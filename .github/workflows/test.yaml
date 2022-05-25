@@ -15,7 +15,7 @@ jobs:
     - name: Setup Go
       uses: WillAbides/setup-go-faster@v1.7.0
       with:
-        go-version: '1.16'
+        go-version: '1.18'
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v3
 
@@ -76,7 +76,7 @@ jobs:
     - name: Setup Go
       uses: WillAbides/setup-go-faster@v1.7.0
       with:
-        go-version: '1.16'
+        go-version: '1.18'
     - name: Build binaries
       env:
         GOOS: ${{ matrix.goos }}
