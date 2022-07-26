@@ -35,7 +35,7 @@ jobs:
     - name: Setup Go
       uses: WillAbides/setup-go-faster@v1.7.0
     - name: Setup Ko
-      uses: imjasonh/setup-ko@v0.4
+      uses: imjasonh/setup-ko@v0.5
       with:
         version: v0.11.2
     - name: Build and push containers
