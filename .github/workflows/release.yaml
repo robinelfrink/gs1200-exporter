@@ -37,7 +37,7 @@ jobs:
       with:
         go-version: 1.18
     - name: Setup Ko
-      uses: imjasonh/setup-ko@v0.4
+      uses: imjasonh/setup-ko@v0.5
       with:
         version: v0.11.2
     - name: Build and push containers
