@@ -41,13 +41,27 @@ jobs:
     - lint
     - analyze
     steps:
-    - name: Set up Docker buildx
-      uses: docker/setup-buildx-action@v1.6.0
-    - name: Build containers
-      uses: docker/build-push-action@v2
+    - name: Checkout code
+      uses: actions/checkout@v3
+    - name: Setup Go
+      uses: WillAbides/setup-go-faster@v1.7.0
       with:
-        push: false
-        platforms: linux/amd64,linux/arm/v7,linux/arm64
+        go-version: '1.18'
+    - name: Setup Ko
+      uses: imjasonh/setup-ko@v0.4
+      with:
+        version: v0.11.2
+    - name: Build containers
+      run: |
+        ko build \
+            --base-import-paths \
+            --platform=linux/amd64,linux/arm/v7,linux/arm64 \
+            --push=false \
+            --image-label="org.opencontainers.image.title=${{ github.event.repository.name }}" \
+            --image-label="org.opencontainers.image.description=${{ github.event.repository.description }}" \
+            --image-label="org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
+            --image-label="org.opencontainers.image.revision=${{ github.sha }}" \
+            ./
 
   binaries:
     name: Create binaries
