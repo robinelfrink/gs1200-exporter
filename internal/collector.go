@@ -3,7 +3,6 @@ package internal
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/http/cookiejar"
@@ -195,7 +194,7 @@ func (c *Collector) FetchAndParse(filename string) error {
 		c.Logout()
 		return err
 	}
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		c.Logout()
 		return err
@@ -242,7 +241,7 @@ func (c *Collector) Login() error {
 		c.Logout()
 		return err
 	}
-	_, err = io.Copy(ioutil.Discard, resp.Body)
+	_, err = io.Copy(io.Discard, resp.Body)
 	if err != nil {
 		c.Logout()
 		return err
@@ -255,7 +254,7 @@ func (c *Collector) Logout() {
 	if err != nil {
 		fmt.Println("Warning:", err)
 	}
-	_, err = io.Copy(ioutil.Discard, resp.Body)
+	_, err = io.Copy(io.Discard, resp.Body)
 	if err != nil {
 		fmt.Println("Warning:", err)
 	}
