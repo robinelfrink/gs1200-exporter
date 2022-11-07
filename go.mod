@@ -3,7 +3,7 @@ module gs1200-exporter
 go 1.19
 
 require (
-	github.com/prometheus/client_golang v1.13.0
+	github.com/prometheus/client_golang v1.13.1
 	github.com/robertkrimen/otto v0.0.0-20211024170158-b87d35c0b86f
 )
 
