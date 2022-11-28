@@ -74,3 +74,8 @@ services:
     ports:
       - 9934:9934
 ```
+
+## Compatibility
+
+This application has been tested with firmwares up to
+[V2.00(ABME.2)](https://www.zyxel.com/global/en/support/download?model=gs1200-8).
