@@ -253,10 +253,11 @@ func (c *Collector) Logout() {
 	resp, err := client.Get("http://" + c.address + "/logout.html")
 	if err != nil {
 		fmt.Println("Warning:", err)
+		return
 	}
+	defer resp.Body.Close()
 	_, err = io.Copy(io.Discard, resp.Body)
 	if err != nil {
 		fmt.Println("Warning:", err)
 	}
-	defer resp.Body.Close()
 }
