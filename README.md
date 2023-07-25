@@ -10,7 +10,7 @@ collecting port metrics.
 It does, however, display metrics in the web gui. These metrics are set in a
 javascript file at the uri `/link_data.js`.
 
-This script will automatically log in to the web gui, evaluate the script, and
+This program will automatically log in to the web gui, evaluate the script, and
 output metrics for use by Prometheus.
 
 ## Usage
