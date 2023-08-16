@@ -18,6 +18,7 @@ jobs:
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         dry_run: true
+        custom_release_rules: chore:patch:Chores
 
   lint:
     name: Lint code
