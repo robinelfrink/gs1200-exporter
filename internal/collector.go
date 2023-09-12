@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
@@ -12,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/robertkrimen/otto"
+	log "github.com/sirupsen/logrus"
 )
 
 var client http.Client
@@ -52,7 +52,7 @@ type PortData struct {
 func GS1200Collector(address string, password string) (*Collector, error) {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
-		fmt.Println("Error:", err)
+		log.Error(err)
 		return nil, err
 	}
 	client = http.Client{
@@ -241,6 +241,7 @@ func (c *Collector) Login() error {
 		c.Logout()
 		return err
 	}
+
 	_, err = io.Copy(io.Discard, resp.Body)
 	if err != nil {
 		c.Logout()
@@ -252,12 +253,12 @@ func (c *Collector) Login() error {
 func (c *Collector) Logout() {
 	resp, err := client.Get("http://" + c.address + "/logout.html")
 	if err != nil {
-		fmt.Println("Warning:", err)
+		log.Warn(err)
 		return
 	}
 	defer resp.Body.Close()
 	_, err = io.Copy(io.Discard, resp.Body)
 	if err != nil {
-		fmt.Println("Warning:", err)
+		log.Warn(err)
 	}
 }

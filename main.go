@@ -2,9 +2,10 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	gs1200 "gs1200-exporter/internal"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -18,12 +19,29 @@ var (
 		"Password to log on to the GS1200")
 	versionFlag = flag.Bool("version", false,
 		"Show gs1200-exporter version")
+	jsonLogging = flag.Bool("json", false,
+		"Enable JSON logging")
+	verboseLogging = flag.Bool("verbose", false,
+		"Enable verbose logging")
 )
 
 func main() {
 	flag.Parse()
+
+	if *jsonLogging {
+		log.SetFormatter(&log.JSONFormatter{})
+	} else {
+		log.SetFormatter(&log.TextFormatter{
+			FullTimestamp: true,
+		})
+	}
+
+	if *verboseLogging {
+		log.SetLevel(log.DebugLevel)
+	}
+
 	if *versionFlag {
-		fmt.Println("gs1200-exporter", Version)
+		log.Info("gs1200-exporter ", Version)
 		os.Exit(0)
 	}
 	collector, err := gs1200.GS1200Collector(
@@ -31,7 +49,7 @@ func main() {
 		getEnv("GS1200_PASSWORD", *gs1200Password),
 	)
 	if err != nil {
-		fmt.Println("Cannot start collector:", err)
+		log.Error("Cannot start collector: ", err)
 		return
 	}
 	exporter := gs1200.GS1200Exporter(*collector, *listenPort)
