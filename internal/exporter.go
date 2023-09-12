@@ -1,13 +1,13 @@
 package internal
 
 import (
-	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -60,14 +60,14 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 func (e *Exporter) Run() {
 	prometheus.MustRegister(e)
 	http.Handle("/metrics", promhttp.Handler())
-	fmt.Println("Listening for requests on port", e.port)
+	log.Info("Listening for requests on port ", e.port)
 	log.Fatal(http.ListenAndServe(":"+string(e.port), nil))
 }
 
 func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	systemData, portData, err := e.collector.Collect()
 	if err != nil {
-		fmt.Println("Collect error:", err)
+		log.Error("Collect error: ", err)
 		return
 	}
 
