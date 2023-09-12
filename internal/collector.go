@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"errors"
 	"io"
 	"math/rand"
 	"net/http"
@@ -242,11 +243,23 @@ func (c *Collector) Login() error {
 		return err
 	}
 
-	_, err = io.Copy(io.Discard, resp.Body)
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(resp.Status)
+	}
+
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		c.Logout()
 		return err
 	}
+
+	// Curiously, a failed login wil happily return 200.
+	if strings.Contains(string(body), "Incorrect password, please try again.") {
+		c.Logout()
+		return errors.New("Login failed")
+	}
+
 	return nil
 }
 
