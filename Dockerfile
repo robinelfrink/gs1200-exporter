@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:1.21.2 AS BUILD
+FROM --platform=$BUILDPLATFORM golang:1.21.3 AS BUILD
 WORKDIR /app
 COPY . .
 ARG TARGETOS
