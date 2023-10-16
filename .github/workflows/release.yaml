@@ -55,6 +55,17 @@ jobs:
             --image-label="org.opencontainers.image.version=${{ needs.tag.outputs.tag }}" \
             --image-label="org.opencontainers.image.revision=${{ github.sha }}" \
             ./
+    - name: Scan container
+      uses: aquasecurity/trivy-action@0.12.0
+      with:
+        image-ref: ghcr.io/${{ github.repository }}:latest
+        format: sarif
+        output: trivy-results.sarif
+        severity: CRITICAL,HIGH
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: trivy-results.sarif
 
   binaries:
     name: Create binaries
