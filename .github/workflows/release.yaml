@@ -103,7 +103,7 @@ jobs:
       run: |
         go build -ldflags="${VERSIONFLAG}" -o ${BINARY}
     - name: Save artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: binaries
         path: ${{ github.event.repository.name }}-v*-*-*
