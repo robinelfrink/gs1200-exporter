@@ -190,7 +190,9 @@ func (c *Collector) Collect() (*SystemData, *[]PortData, error) {
 }
 
 func (c *Collector) FetchAndParse(filename string) error {
-	resp, err := client.Get("http://" + c.address + "/" + filename)
+	fileUrl := "http://" + c.address + "/" + filename
+	log.Debug("Fetch " + fileUrl)
+	resp, err := client.Get(fileUrl)
 	if err != nil {
 		c.Logout()
 		return err
@@ -200,6 +202,7 @@ func (c *Collector) FetchAndParse(filename string) error {
 		c.Logout()
 		return err
 	}
+	log.Debug("Parse " + filename)
 	_, err = vm.Run(string(body))
 	if err != nil {
 		c.Logout()
@@ -233,9 +236,10 @@ func (c *Collector) Login() error {
 	if len(match) < 1 || (version >= 2 && revision >= 1) {
 		pass = c.EncryptPassword(c.password)
 	}
-	resp, err := client.PostForm("http://"+c.address+"/login.cgi",
-		url.Values{"password": {pass}},
-	)
+
+	loginUrl := "http://" + c.address + "/login.cgi"
+	log.Debug("Logging in at " + loginUrl)
+	resp, err := client.PostForm(loginUrl, url.Values{"password": {pass}})
 	if err != nil {
 		// Even though logging in failed, try to log out, clearing the
 		// session.
@@ -264,7 +268,9 @@ func (c *Collector) Login() error {
 }
 
 func (c *Collector) Logout() {
-	resp, err := client.Get("http://" + c.address + "/logout.html")
+	logoutUrl := "http://" + c.address + "/logout.html"
+	log.Debug("Logging out at " + logoutUrl)
+	resp, err := client.Get(logoutUrl)
 	if err != nil {
 		log.Warn(err)
 		return
