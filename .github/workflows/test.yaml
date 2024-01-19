@@ -109,5 +109,27 @@ jobs:
       env:
         GOOS: ${{ matrix.goos }}
         GOARCH: ${{ matrix.goarch }}
+        BINARY: ${{ github.event.repository.name }}-${{ github.head_ref }}-${{ matrix.goos }}-${{ matrix.goarch }}
+        VERSIONFLAG: -X 'main.Version=${{ github.head_ref }}'
       run: |
-        go build
+        go build -ldflags="${VERSIONFLAG}" -o ${BINARY}
+    - name: Save artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: binary ${{ matrix.goos }} ${{ matrix.goarch }}
+        path: ${{ github.event.repository.name }}-*-*-*
+        retention-days: 1
+
+  artifacts:
+    name: Test artifacts
+    runs-on: ubuntu-latest
+    needs:
+    - binaries
+    steps:
+    - name: Fetch binaries
+      uses: actions/download-artifact@v4
+      with:
+        path: binaries
+        pattern: binary*
+        merge-multiple: true
+    - run: ls -R binaries
