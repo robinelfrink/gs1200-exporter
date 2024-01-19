@@ -105,7 +105,7 @@ jobs:
     - name: Save artifact
       uses: actions/upload-artifact@v4
       with:
-        name: binaries
+        name: binary ${{ matrix.goos }} ${{ matrix.goarch }}
         path: ${{ github.event.repository.name }}-v*-*-*
         retention-days: 1
 
@@ -120,7 +120,10 @@ jobs:
     - name: Fetch binaries
       uses: actions/download-artifact@v4
       with:
-        name: binaries
+        path: binaries
+        pattern: binary*
+        merge-multiple: true
+
     - name: Create checksums
       run: |
         sha256sum ${{ github.event.repository.name }}-v*-*-* | tee ${{ github.event.repository.name }}-${{ needs.tag.outputs.tag }}.sha256
