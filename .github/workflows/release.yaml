@@ -105,7 +105,7 @@ jobs:
     - name: Save artifact
       uses: actions/upload-artifact@v4
       with:
-        name: binaries
+        name: binary ${{ matrix.goos }} ${{ matrix.goarch }}
         path: ${{ github.event.repository.name }}-v*-*-*
         retention-days: 1
 
