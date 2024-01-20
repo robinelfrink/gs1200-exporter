@@ -63,6 +63,7 @@ func GS1200Collector(address string, password string) (*Collector, error) {
 			MaxIdleConns:      5,
 		},
 	}
+
 	collector := &Collector{
 		address:  address,
 		password: password,
@@ -194,17 +195,21 @@ func (c *Collector) FetchAndParse(filename string) error {
 	log.Debug("Fetch " + fileUrl)
 	resp, err := client.Get(fileUrl)
 	if err != nil {
+		log.Debug("... fetch error: ", err)
 		c.Logout()
 		return err
 	}
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		log.Debug("... fetch error: ", err)
 		c.Logout()
 		return err
 	}
+	log.Trace(string(body))
 	log.Debug("Parse " + filename)
 	_, err = vm.Run(string(body))
 	if err != nil {
+		log.Debug("... parse error: ", err)
 		c.Logout()
 		return err
 	}
@@ -241,6 +246,7 @@ func (c *Collector) Login() error {
 	log.Debug("Logging in at " + loginUrl)
 	resp, err := client.PostForm(loginUrl, url.Values{"password": {pass}})
 	if err != nil {
+		log.Debug("... login error: ", err)
 		// Even though logging in failed, try to log out, clearing the
 		// session.
 		c.Logout()
@@ -249,17 +255,20 @@ func (c *Collector) Login() error {
 
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
+		log.Debug("... login error: ", err)
 		return errors.New(resp.Status)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		log.Debug("... login read error: ", err)
 		c.Logout()
 		return err
 	}
 
 	// Curiously, a failed login wil happily return 200.
 	if strings.Contains(string(body), "Incorrect password, please try again.") {
+		log.Debug("... login failed")
 		c.Logout()
 		return errors.New("Login failed")
 	}

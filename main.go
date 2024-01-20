@@ -23,6 +23,8 @@ var (
 		"Enable JSON logging")
 	verboseLogging = flag.Bool("verbose", false,
 		"Enable verbose logging")
+	debugLogging = flag.Bool("debug", false,
+		"Enable debug logging")
 )
 
 func main() {
@@ -38,6 +40,10 @@ func main() {
 
 	if *verboseLogging {
 		log.SetLevel(log.DebugLevel)
+	}
+
+	if *debugLogging {
+		log.SetLevel(log.TraceLevel)
 	}
 
 	if *versionFlag {
