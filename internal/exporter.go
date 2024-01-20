@@ -67,7 +67,7 @@ func (e *Exporter) Run() {
 func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	systemData, portData, err := e.collector.Collect()
 	if err != nil {
-		log.Error("Collect error: ", err)
+		log.Error("Collect failed")
 		return
 	}
 
