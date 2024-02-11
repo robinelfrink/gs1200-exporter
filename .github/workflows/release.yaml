@@ -34,7 +34,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     - name: Setup Go
-      uses: WillAbides/setup-go-faster@v1.13.0
+      uses: WillAbides/setup-go-faster@v1.14.0
       with:
         go-version: 1.19
     - name: Setup Ko
@@ -91,7 +91,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     - name: Setup Go
-      uses: WillAbides/setup-go-faster@v1.13.0
+      uses: WillAbides/setup-go-faster@v1.14.0
       with:
         go-version: '1.19'
     - name: Build binaries
