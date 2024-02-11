@@ -101,6 +101,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+    - name: Fetch short SHA
+      uses: benjlevesque/short-sha@v3.0
+      id: short-sha
     - name: Setup Go
       uses: WillAbides/setup-go-faster@v1.13.0
       with:
@@ -109,14 +112,14 @@ jobs:
       env:
         GOOS: ${{ matrix.goos }}
         GOARCH: ${{ matrix.goarch }}
-        BINARY: ${{ github.event.repository.name }}-${{ github.head_ref }}-${{ matrix.goos }}-${{ matrix.goarch }}
-        VERSIONFLAG: -X 'main.Version=${{ github.head_ref }}'
+        BINARY: ${{ github.event.repository.name }}-${{ steps.short-sha.outputs.sha }}-${{ matrix.goos }}-${{ matrix.goarch }}
+        VERSIONFLAG: -X 'main.Version=${{ steps.short-sha.outputs.sha }}'
       run: |
         go build -ldflags="${VERSIONFLAG}" -o ${BINARY}
     - name: Save artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ github.event.repository.name }}-${{ github.head_ref }}-${{ matrix.goos }}-${{ matrix.goarch }}
+        name: ${{ github.event.repository.name }}-${{ steps.short-sha.outputs.sha }}-${{ matrix.goos }}-${{ matrix.goarch }}
         path: ${{ github.event.repository.name }}-*-*-*
         retention-days: 1
 
