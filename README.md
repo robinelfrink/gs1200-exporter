@@ -77,5 +77,5 @@ services:
 
 ## Compatibility
 
-This application has been tested with firmwares up to
-[V2.00(ABME.2)](https://www.zyxel.com/global/en/support/download?model=gs1200-8).
+This application has been tested with V2.00 firmwares up to
+[V2.00(ABME.3)](https://www.zyxel.com/global/en/support/download?model=gs1200-8).
