@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -109,11 +108,14 @@ func (c *Collector) GetArrayOfArrayOfInterface(name string) [][]interface{} {
 func (c *Collector) Collect() (*SystemData, *[]PortData, error) {
 	vm = otto.New()
 
-	// We need system data to determine how to log in
-	err := c.FetchAndParse("system_data.js")
+	// Login
+	err := c.Login()
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// Fetch and parse the javascript files containing all the data.
+	_ = c.FetchAndParse("system_data.js")
 	systemData = SystemData{
 		Max_port:    int64(c.GetInt("Max_port")),
 		model_name:  c.GetString("model_name"),
@@ -123,14 +125,6 @@ func (c *Collector) Collect() (*SystemData, *[]PortData, error) {
 		loop:        c.GetString("loop"),
 	}
 	loop_status := c.GetArrayOfString("loop_status")
-
-	// Login
-	err = c.Login()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Fetch and parse the javascript files containing all the data.
 	_ = c.FetchAndParse("link_data.js")
 	portstatus := c.GetArrayOfString("portstatus")
 	speed := c.GetArrayOfString("speed")
@@ -229,21 +223,11 @@ func (c *Collector) EncryptPassword(password string) string {
 }
 
 func (c *Collector) Login() error {
-	// Log in on the GS1200. If another user is logged on the device
-	// will simply send an empty response, making it impossible
-	// to do proper error-handling.
-	pass := c.password
-	r, _ := regexp.Compile(`^V(\d+\.\d+)\([A-Z]+\.(\d+)\)[A-Z]\d$`)
-	match := r.FindStringSubmatch(systemData.sys_fmw_ver)
-	version, _ := strconv.ParseFloat(match[1], 64)
-	revision, _ := strconv.Atoi(match[2])
-	if len(match) < 1 || (version >= 2 && revision >= 1) {
-		pass = c.EncryptPassword(c.password)
-	}
+	// Log in on the GS1200.
 
 	loginUrl := "http://" + c.address + "/login.cgi"
 	log.Debug("Logging in at " + loginUrl)
-	resp, err := client.PostForm(loginUrl, url.Values{"password": {pass}})
+	resp, err := client.PostForm(loginUrl, url.Values{"password": {c.EncryptPassword(c.password)}})
 	if err != nil {
 		log.Debug("... login error: ", err)
 		// Even though logging in failed, try to log out, clearing the
@@ -265,11 +249,18 @@ func (c *Collector) Login() error {
 		return err
 	}
 
+	// Somebody else is logged in.
+	if strings.Contains(string(body), "If a user is logged in already") {
+		log.Debug("... login failed, already logged in")
+		return errors.New("Logged in elsewhere")
+	}
+
 	// Curiously, a failed login wil happily return 200.
-	if strings.Contains(string(body), "Incorrect password, please try again.") {
-		log.Debug("... login failed")
+	if strings.Contains(string(body), "<title>Message</title>") &&
+		strings.Contains(string(body), "alert(\"Incorrect password, please try again.\");") {
+		log.Debug("... incorrect password")
 		c.Logout()
-		return errors.New("Login failed")
+		return errors.New("Incorrect password")
 	}
 
 	return nil
