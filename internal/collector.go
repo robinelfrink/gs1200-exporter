@@ -218,12 +218,11 @@ func (c *Collector) FetchAndParse(filename string) error {
 
 func (c *Collector) EncryptPassword(password string) string {
 	const letters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	bytes := []byte(password)
 	result := ""
-	for i := 0; i <= len(bytes); i++ {
+	for i := 0; i <= len(password); i++ {
 		result = result + string(letters[rand.Intn(len(letters))])
-		if i < len(bytes) {
-			result = result + string(rune(int(bytes[i])-len(bytes)))
+		if i < len(password) {
+			result = result + string(rune(int(password[i])-len(password)))
 		}
 	}
 	return result
