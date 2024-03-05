@@ -1,6 +1,6 @@
 module gs1200-exporter
 
-go 1.22
+go 1.22.0
 
 require (
 	github.com/prometheus/client_golang v1.18.0
