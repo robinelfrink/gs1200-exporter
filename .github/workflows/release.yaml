@@ -126,7 +126,7 @@ jobs:
       run: |
         sha256sum ${{ github.event.repository.name }}-v*-*-* | tee ${{ github.event.repository.name }}-${{ needs.tag.outputs.tag }}.sha256
     - name: Create release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ needs.tag.outputs.tag }}
         name: Release ${{ needs.tag.outputs.version }}
