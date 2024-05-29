@@ -169,8 +169,8 @@ func (c *Collector) Collect() (*SystemData, *[]PortData, error) {
 			}
 		}
 
-		// Port speed seems to always be "[num] Mbps".
-		log.Printf("%v", speed[i])
+		// Port speed seems to always be "[num] [unit] [duplex]". Older versions
+		// did not show duplex status.
 		speedInfo := strings.Fields(speed[i])
 		portData[i].speed, _ = strconv.Atoi(speedInfo[0])
 		portData[i].speedUnit = speedInfo[1]
