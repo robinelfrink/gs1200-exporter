@@ -25,8 +25,8 @@ var (
 		[]string{"vlans"}, nil)
 	speed_metric = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "speed"),
-		"Port speed in Mbps.",
-		[]string{"port", "status", "loop", "pvlan", "vlans"}, nil)
+		"Port speed.",
+		[]string{"port", "status", "loop", "pvlan", "vlans", "unit", "duplex"}, nil)
 	tx_metric = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "packets_tx"),
 		"Number of packets transmitted.",
@@ -81,7 +81,7 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	for _, port := range *portData {
 		ch <- prometheus.MustNewConstMetric(speed_metric, prometheus.GaugeValue,
 			float64(port.speed), port.name, port.portstatus, port.loop_status,
-			port.pvlan, strings.Join(port.vlans, ","))
+			port.pvlan, strings.Join(port.vlans, ","), port.speedUnit, port.duplex)
 		ch <- prometheus.MustNewConstMetric(rx_metric, prometheus.GaugeValue,
 			port.stats.rx, port.name)
 		ch <- prometheus.MustNewConstMetric(tx_metric, prometheus.GaugeValue,
