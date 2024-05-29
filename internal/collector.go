@@ -44,6 +44,8 @@ type PortData struct {
 	loop_status string
 	portstatus  string
 	speed       int
+	speedUnit   string
+	duplex      string
 	stats       PortStats
 	pvlan       string
 	vlans       []string
@@ -168,7 +170,15 @@ func (c *Collector) Collect() (*SystemData, *[]PortData, error) {
 		}
 
 		// Port speed seems to always be "[num] Mbps".
-		portData[i].speed, _ = strconv.Atoi(strings.ReplaceAll(speed[i], " Mbps", ""))
+		log.Printf("%v", speed[i])
+		speedInfo := strings.Fields(speed[i])
+		portData[i].speed, _ = strconv.Atoi(speedInfo[0])
+		portData[i].speedUnit = speedInfo[1]
+		if len(speedInfo) > 2 {
+			portData[i].duplex = speedInfo[2]
+		} else {
+			portData[i].duplex = ""
+		}
 
 		// Sent/received traffic has a weird structure. This is what Zyxel's
 		// code does:
