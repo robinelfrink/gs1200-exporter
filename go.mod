@@ -4,7 +4,7 @@ go 1.22.2
 
 require (
 	github.com/prometheus/client_golang v1.20.5
-	github.com/robertkrimen/otto v0.5.0
+	github.com/robertkrimen/otto v0.5.1
 )
 
 require (
