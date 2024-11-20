@@ -1,9 +1,6 @@
 {
 	"name": "Go",
 	"image": "mcr.microsoft.com/devcontainers/go:dev-1.22-bookworm",
-	"runArgs": [
-		"--userns=keep-id"
-	],
 	"containerEnv": {
 		"HOME": "/tmp/go"
 	}

@@ -109,6 +109,11 @@ func (c *Collector) GetArrayOfArrayOfInterface(name string) [][]interface{} {
 
 func (c *Collector) Collect() (*SystemData, *[]PortData, error) {
 	vm = otto.New()
+	var loop_status []string
+	var portstatus []string
+	var speed []string
+	var stats [][]interface{}
+	var vlans [][]string
 
 	// Login
 	err := c.Login()
@@ -117,7 +122,19 @@ func (c *Collector) Collect() (*SystemData, *[]PortData, error) {
 	}
 
 	// Fetch and parse the javascript files containing all the data.
-	_ = c.FetchAndParse("system_data.js")
+	for _, file := range []string{
+		"system_data.js",
+		"link_data.js",
+		"VLAN_1Q_List_data.js",
+	} {
+		js, err := c.FetchJS(file)
+		if err != nil {
+			return nil, nil, err
+		}
+		if err = c.ParseJS(js); err != nil {
+			return nil, nil, err
+		}
+	}
 	systemData = SystemData{
 		Max_port:    int64(c.GetInt("Max_port")),
 		model_name:  c.GetString("model_name"),
@@ -126,16 +143,11 @@ func (c *Collector) Collect() (*SystemData, *[]PortData, error) {
 		sys_MAC:     c.GetString("sys_MAC"),
 		loop:        c.GetString("loop"),
 	}
-	loop_status := c.GetArrayOfString("loop_status")
-	_ = c.FetchAndParse("link_data.js")
-	portstatus := c.GetArrayOfString("portstatus")
-	speed := c.GetArrayOfString("speed")
-	stats := c.GetArrayOfArrayOfInterface("Stats")
-	_ = c.FetchAndParse("VLAN_1Q_List_data.js")
-	vlans := c.GetArrayOfArrayOfString("qvlans")
-	if err != nil {
-		return nil, nil, err
-	}
+	loop_status = c.GetArrayOfString("loop_status")
+	portstatus = c.GetArrayOfString("portstatus")
+	speed = c.GetArrayOfString("speed")
+	stats = c.GetArrayOfArrayOfInterface("Stats")
+	vlans = c.GetArrayOfArrayOfString("qvlans")
 
 	// Clear the session.
 	c.Logout()
@@ -194,24 +206,34 @@ func (c *Collector) Collect() (*SystemData, *[]PortData, error) {
 	return &systemData, &portData, nil
 }
 
-func (c *Collector) FetchAndParse(filename string) error {
+func (c *Collector) FetchJS(filename string) (string, error) {
 	fileUrl := "http://" + c.address + "/" + filename
 	log.Debug("Fetch " + fileUrl)
 	resp, err := client.Get(fileUrl)
 	if err != nil {
 		log.Debug("... fetch error: ", err)
 		c.Logout()
-		return err
+		return "", err
+	}
+	if resp.StatusCode != 200 {
+		err := errors.New(resp.Status)
+		log.Debug("... fetch error: ", err)
+		c.Logout()
+		return "", err
 	}
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Debug("... fetch error: ", err)
 		c.Logout()
-		return err
+		return "", err
 	}
-	log.Trace(string(body))
-	log.Debug("Parse " + filename)
-	_, err = vm.Run(string(body))
+
+	return string(body), nil
+}
+
+func (c *Collector) ParseJS(js string) error {
+	log.Debug("Parse JavaScript\n" + js)
+	_, err := vm.Run(js)
 	if err != nil {
 		log.Debug("... parse error: ", err)
 		c.Logout()
