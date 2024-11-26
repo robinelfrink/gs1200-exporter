@@ -2,6 +2,7 @@ package internal
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -35,6 +36,14 @@ var (
 		prometheus.BuildFQName(namespace, "", "packets_rx"),
 		"Number of packets received.",
 		[]string{"port"}, nil)
+	power_metric = prometheus.NewDesc(
+		prometheus.BuildFQName(namespace, "", "power"),
+		"Power usage in Watts.",
+		[]string{"port"}, nil)
+	max_power_metric = prometheus.NewDesc(
+		prometheus.BuildFQName(namespace, "", "max_power"),
+		"Maximum power available to PoE ports in Watts.",
+		[]string{"led"}, nil)
 )
 
 type Exporter struct {
@@ -55,6 +64,8 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- speed_metric
 	ch <- tx_metric
 	ch <- rx_metric
+	ch <- power_metric
+	ch <- max_power_metric
 }
 
 func (e *Exporter) Run() {
@@ -78,7 +89,12 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(num_vlans_metric, prometheus.GaugeValue,
 		float64(len(systemData.vlans)), strings.Join(systemData.vlans, ","))
 
-	for _, port := range *portData {
+	if strings.HasSuffix(systemData.model_name, "HP v2") {
+		ch <- prometheus.MustNewConstMetric(max_power_metric, prometheus.GaugeValue,
+			float64(systemData.total_power), strconv.Itoa(systemData.max_led_power))
+	}
+
+	for i, port := range *portData {
 		ch <- prometheus.MustNewConstMetric(speed_metric, prometheus.GaugeValue,
 			float64(port.speed), port.name, port.portstatus, port.loop_status,
 			port.pvlan, strings.Join(port.vlans, ","), port.speedUnit, port.duplex)
@@ -86,6 +102,10 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 			port.stats.rx, port.name)
 		ch <- prometheus.MustNewConstMetric(tx_metric, prometheus.GaugeValue,
 			port.stats.tx, port.name)
+		if strings.HasSuffix(systemData.model_name, "HP v2") && i < 4 {
+			ch <- prometheus.MustNewConstMetric(power_metric, prometheus.GaugeValue,
+				port.stats.port_power, port.name)
+		}
 	}
 
 }

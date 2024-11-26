@@ -1,6 +1,6 @@
 var Max_port = '8';
-var model_name = 'GS1200-8';
-var sys_dev_name = 'GS1200-8';
+var model_name = 'GS1200-8HP v2';
+var sys_dev_name = 'GS1200-8HP v2';
 var sys_fmw_ver = 'V2.00(ABME.3)C0';
 var sys_bld_date = '2021.12.17';
 var sys_MAC = 'BC:CF:4F:FC:5E:A8';
