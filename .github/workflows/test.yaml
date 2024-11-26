@@ -84,9 +84,9 @@ jobs:
     - name: Build containers
       run: |
         ko build \
-            --base-import-paths \
             --platform=linux/amd64,linux/arm/v7,linux/arm64 \
-            --push=false \
+            --bare \
+            --tags=test \
             --image-label="org.opencontainers.image.title=${{ github.event.repository.name }}" \
             --image-label="org.opencontainers.image.description=${{ github.event.repository.description }}" \
             --image-label="org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
@@ -138,7 +138,7 @@ jobs:
       with:
         name: ${{ github.event.repository.name }}-${{ steps.short-sha.outputs.sha }}-${{ matrix.goos }}-${{ matrix.goarch }}
         path: ${{ github.event.repository.name }}-*-*-*
-        retention-days: 1
+        retention-days: 7
 
   artifacts:
     name: Test artifacts

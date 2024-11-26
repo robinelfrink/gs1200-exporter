@@ -1,16 +1,18 @@
-# Prometheus metrics exporter for the Zyxel GS1200-5/GS1200-8
+# Prometheus metrics exporter for the Zyxel GS1200 series switches
 
 The [Zyxel GS1200-5/GS1200-8](https://www.zyxel.com/products_services/5-Port-8-Port-Web-Managed-Gigabit-Switch-GS1200-5-GS1200-8/)
-is a small and cheap managed switch, capable of handling 16Gbps across
+series of switches and their
+[PoE enabled siblings](https://www.zyxel.com/nl/nl/products/switch/5-port-8-port-web-managed-poe-gigabit-switch-gs1200-poe-series)
+are small and cheap managed switches, capable of handling 16Gbps across
 5 or 8 ports, so say the specs.
 
 Unfortunately the firmware does not implement SNMP or another standard for
 collecting port metrics.
 
 It does, however, display metrics in the web gui. These metrics are set in a
-javascript file at the uri `/link_data.js`.
+number of javascript files at uris like `/link_data.js`.
 
-This program will automatically log in to the web gui, evaluate the script, and
+This program will automatically log in to the web gui, evaluate the scripts, and
 output metrics for use by Prometheus.
 
 ## Usage
@@ -19,7 +21,7 @@ The program can be configured by setting environment variables prior to running:
 
 | name              | required | description                            |
 |-------------------|----------|----------------------------------------|
-| `GS1200_ADDRESS`  | yes      | IP address of the GS1200-5/GS1200-8    |
+| `GS1200_ADDRESS`  | yes      | IP address of the GS1200               |
 | `GS1200_PASSWORD` | yes      | Password to log on with                |
 | `GS1200_PORT`     | no       | Port number to listen on, default 9934 |
 
@@ -77,5 +79,4 @@ services:
 
 ## Compatibility
 
-This application has been tested with V2.00 firmwares up to
-[V2.00(ABME.3)](https://www.zyxel.com/global/en/support/download?model=gs1200-8).
+This application has been tested with V2.00 firmwares up to V2.00.

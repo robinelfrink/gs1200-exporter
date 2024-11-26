@@ -2,6 +2,8 @@ package internal
 
 import (
 	"embed"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -148,7 +150,7 @@ func TestCollector_FetchJS(t *testing.T) {
 		},
 		{
 			filename: "system_data.js",
-			size:     634,
+			size:     644,
 			wantErr:  false,
 		},
 		{
@@ -174,7 +176,7 @@ func TestCollector_FetchJS(t *testing.T) {
 				return
 			}
 			if !tt.wantErr && len(got) != tt.size {
-				t.Errorf("Collector.FetchJS(%v) = %v bytes, want %v bytes", tt.filename, got, tt.size)
+				t.Errorf("Collector.FetchJS(%v) = %v bytes, want %v bytes", tt.filename, len(got), tt.size)
 			}
 		})
 	}
@@ -193,7 +195,7 @@ func TestCollector_ParseJS(t *testing.T) {
 		{
 			filename: "system_data.js",
 			key:      "model_name",
-			want:     "GS1200-8",
+			want:     "GS1200-8HP v2",
 		},
 		{
 			filename: "link_data.js",
@@ -229,6 +231,71 @@ func TestCollector_ParseJS(t *testing.T) {
 			}
 			if got.String() != tt.want {
 				t.Errorf("Collector.ParseJS() error = failed key %v: %v, want %v", tt.key, got.String(), tt.want)
+			}
+		})
+	}
+}
+
+func TestCollector_Collect(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(TestingHandleRequest))
+	// Close the server when test finishes
+	defer server.Close()
+
+	tests := []struct {
+		name string
+		ok   func(SystemData, []PortData) error
+	}{
+		{
+			name: "model name",
+			ok: func(s SystemData, p []PortData) error {
+				if s.model_name == "GS1200-8HP v2" {
+					return nil
+				}
+				return errors.New(s.model_name)
+			},
+		},
+		{
+			name: "port 5 speed",
+			ok: func(s SystemData, p []PortData) error {
+				if p[4].speed == 1000 {
+					return nil
+				}
+				return fmt.Errorf("%d", p[4].speed)
+			},
+		},
+		{
+			name: "port 3 primary vlan",
+			ok: func(s SystemData, p []PortData) error {
+				if p[2].pvlan == "1" {
+					return nil
+				}
+				return errors.New(p[2].pvlan)
+			},
+		},
+		{
+			name: "max led power",
+			ok: func(s SystemData, p []PortData) error {
+				if s.max_led_power == 50 {
+					return nil
+				}
+				return fmt.Errorf("%d", s.max_led_power)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Collector{
+				address:  strings.Replace(server.URL, "http://", "", 1),
+				password: "OFcVQl1shaUM",
+			}
+			s, p, err := c.Collect()
+			if err != nil {
+				t.Errorf("Collector.Collect() error = %v", err)
+				return
+			}
+			if err := tt.ok(*s, *p); err != nil {
+				t.Errorf("Collector.Collect() error = wrong value %v", err)
+				return
 			}
 		})
 	}

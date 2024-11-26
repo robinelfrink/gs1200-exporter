@@ -25,18 +25,21 @@ type Collector struct {
 }
 
 type SystemData struct {
-	Max_port    int64
-	model_name  string
-	sys_fmw_ver string
-	sys_IP      string
-	sys_MAC     string
-	loop        string
-	vlans       []string
+	Max_port      int64
+	model_name    string
+	sys_fmw_ver   string
+	sys_IP        string
+	sys_MAC       string
+	loop          string
+	vlans         []string
+	total_power   int
+	max_led_power int
 }
 
 type PortStats struct {
-	rx float64
-	tx float64
+	rx         float64
+	tx         float64
+	port_power float64
 }
 
 type PortData struct {
@@ -107,6 +110,16 @@ func (c *Collector) GetArrayOfArrayOfInterface(name string) [][]interface{} {
 	return export.([][]interface{})
 }
 
+func (c *Collector) GetArrayOfFloat(name string) []float64 {
+	array, _ := c.GetValue(name).Export()
+	result := []float64{}
+	for _, value := range array.([]interface{}) {
+		f, _ := value.(float64)
+		result = append(result, f)
+	}
+	return result
+}
+
 func (c *Collector) Collect() (*SystemData, *[]PortData, error) {
 	vm = otto.New()
 	var loop_status []string
@@ -114,6 +127,7 @@ func (c *Collector) Collect() (*SystemData, *[]PortData, error) {
 	var speed []string
 	var stats [][]interface{}
 	var vlans [][]string
+	var port_power = []float64{}
 
 	// Login
 	err := c.Login()
@@ -148,6 +162,20 @@ func (c *Collector) Collect() (*SystemData, *[]PortData, error) {
 	speed = c.GetArrayOfString("speed")
 	stats = c.GetArrayOfArrayOfInterface("Stats")
 	vlans = c.GetArrayOfArrayOfString("qvlans")
+
+	// Fetch PoE-data if applicable
+	if strings.HasSuffix(systemData.model_name, "HP v2") {
+		js, err := c.FetchJS("poe_data.js")
+		if err != nil {
+			return nil, nil, err
+		}
+		if err = c.ParseJS(js); err != nil {
+			return nil, nil, err
+		}
+		systemData.total_power = c.GetInt("total_power")
+		systemData.max_led_power = c.GetInt("max_led_power")
+		port_power = c.GetArrayOfFloat("port_power")
+	}
 
 	// Clear the session.
 	c.Logout()
@@ -201,6 +229,11 @@ func (c *Collector) Collect() (*SystemData, *[]PortData, error) {
 		//   rx = parseFloat(rx).toLocaleString();
 		portData[i].stats.tx = float64(stats[i][1].(int64) + stats[i][2].(int64) + stats[i][3].(int64))
 		portData[i].stats.rx = float64(stats[i][6].(int64) + stats[i][7].(int64) + stats[i][8].(int64) + stats[i][10].(int64))
+
+		// PoE data
+		if strings.HasSuffix(systemData.model_name, "HP v2") && i < 4 {
+			portData[i].stats.port_power = port_power[i]
+		}
 	}
 
 	return &systemData, &portData, nil
