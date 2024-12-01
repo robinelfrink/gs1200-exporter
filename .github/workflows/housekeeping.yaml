@@ -4,6 +4,7 @@ name: housekeeping
 on:
   schedule:
     - cron: "15 6 * * *"
+  workflow_dispatch:
 
 
 jobs:
