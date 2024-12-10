@@ -70,6 +70,8 @@ jobs:
     - lint
     - analyze
     - test
+    permissions:
+      packages: write
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
