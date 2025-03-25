@@ -195,10 +195,10 @@ func (c *Collector) Collect() (*SystemData, *[]PortData, error) {
 		// Loop over configured vlans.
 		for _, vlan := range vlans {
 			// Parse vlan flags
-			flag1, _ := strconv.ParseInt(strings.Replace(vlan[1], "0x", "", -1), 16, 64)
+			flag1, _ := strconv.ParseInt(strings.ReplaceAll(vlan[1], "0x", ""), 16, 64)
 			if (flag1>>(i))&1 > 0 {
 				// Current vlan is connected to current port.
-				flag2, _ := strconv.ParseInt(strings.Replace(vlan[2], "0x", "", -1), 16, 64)
+				flag2, _ := strconv.ParseInt(strings.ReplaceAll(vlan[2], "0x", ""), 16, 64)
 				if (flag2>>(i))&1 > 0 {
 					// Tagged
 					portData[i].vlans = append(portData[i].vlans, vlan[0])
@@ -301,7 +301,9 @@ func (c *Collector) Login() error {
 		return err
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 	if resp.StatusCode != http.StatusOK {
 		log.Debug("... login error: ", err)
 		return errors.New(resp.Status)
@@ -317,7 +319,7 @@ func (c *Collector) Login() error {
 	// Somebody else is logged in.
 	if strings.Contains(string(body), "If a user is logged in already") {
 		log.Debug("... login failed, already logged in")
-		return errors.New("Logged in elsewhere")
+		return errors.New("logged in elsewhere")
 	}
 
 	// Curiously, a failed login wil happily return 200.
@@ -325,7 +327,7 @@ func (c *Collector) Login() error {
 		strings.Contains(string(body), "alert(\"Incorrect password, please try again.\");") {
 		log.Debug("... incorrect password")
 		c.Logout()
-		return errors.New("Incorrect password")
+		return errors.New("incorrect password")
 	}
 
 	return nil
@@ -339,7 +341,9 @@ func (c *Collector) Logout() {
 		log.Warn(err)
 		return
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 	_, err = io.Copy(io.Discard, resp.Body)
 	if err != nil {
 		log.Warn(err)
