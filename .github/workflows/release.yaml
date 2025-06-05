@@ -133,5 +133,5 @@ jobs:
         body: |
           Changes in this release:
           ${{ needs.tag.outputs.changelog }}
-          Docker image: ghcr.io/${{ github.repository }}:${{ needs.tag.outputs.tag }}
+          OCI image: ghcr.io/${{ github.repository }}:${{ needs.tag.outputs.tag }}
         files: ${{ github.event.repository.name }}-v*-*-*,${{ github.event.repository.name }}-*.sha256
