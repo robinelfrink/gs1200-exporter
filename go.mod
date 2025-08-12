@@ -1,10 +1,11 @@
 module gs1200-exporter
 
-go 1.24.0
+go 1.24.6
 
 require (
 	github.com/prometheus/client_golang v1.23.0
 	github.com/robertkrimen/otto v0.5.1
+	github.com/tdewolff/parse/v2 v2.8.1
 )
 
 require github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
