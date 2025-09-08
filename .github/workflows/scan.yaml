@@ -14,7 +14,7 @@ jobs:
     name: Scan container
     steps:
     - name: Run Trivy
-      uses: aquasecurity/trivy-action@0.32.0
+      uses: aquasecurity/trivy-action@0.33.1
       with:
         image-ref: ghcr.io/${{ github.repository }}:latest
         format: sarif
