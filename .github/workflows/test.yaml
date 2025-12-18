@@ -27,9 +27,9 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v6
     - name: Setup Go
-      uses: WillAbides/setup-go-faster@v1.14.0
+      uses: actions/setup-go@v6.1.0
       with:
-        go-version: '1.24.6'
+        go-version-file: 'go.mod'
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v9
 
@@ -40,9 +40,9 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v6
     - name: Setup Go
-      uses: WillAbides/setup-go-faster@v1.14.0
+      uses: actions/setup-go@v6.1.0
       with:
-        go-version: '1.24.6'
+        go-version-file: 'go.mod'
     - name: Install dependencies
       run: go get .
     - name: Run unit tests
@@ -76,9 +76,9 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v6
     - name: Setup Go
-      uses: WillAbides/setup-go-faster@v1.14.0
+      uses: actions/setup-go@v6.1.0
       with:
-        go-version: '1.24.6'
+        go-version-file: 'go.mod'
     - name: Setup Ko
       uses: imjasonh/setup-ko@v0.9
       with:
@@ -124,9 +124,9 @@ jobs:
       uses: benjlevesque/short-sha@v3.0
       id: short-sha
     - name: Setup Go
-      uses: WillAbides/setup-go-faster@v1.14.0
+      uses: actions/setup-go@v6.1.0
       with:
-        go-version: '1.24.6'
+        go-version-file: 'go.mod'
     - name: Build binaries
       env:
         GOOS: ${{ matrix.goos }}
