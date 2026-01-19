@@ -27,7 +27,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v6
     - name: Setup Go
-      uses: actions/setup-go@v6.1.0
+      uses: actions/setup-go@v6.2.0
       with:
         go-version-file: 'go.mod'
     - name: Run golangci-lint
@@ -40,7 +40,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v6
     - name: Setup Go
-      uses: actions/setup-go@v6.1.0
+      uses: actions/setup-go@v6.2.0
       with:
         go-version-file: 'go.mod'
     - name: Install dependencies
@@ -76,7 +76,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v6
     - name: Setup Go
-      uses: actions/setup-go@v6.1.0
+      uses: actions/setup-go@v6.2.0
       with:
         go-version-file: 'go.mod'
     - name: Setup Ko
@@ -124,7 +124,7 @@ jobs:
       uses: benjlevesque/short-sha@v3.0
       id: short-sha
     - name: Setup Go
-      uses: actions/setup-go@v6.1.0
+      uses: actions/setup-go@v6.2.0
       with:
         go-version-file: 'go.mod'
     - name: Build binaries
