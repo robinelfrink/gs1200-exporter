@@ -5,7 +5,6 @@ go 1.25.5
 require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/robertkrimen/otto v0.5.1
-	github.com/tdewolff/parse/v2 v2.8.5
 )
 
 require (
