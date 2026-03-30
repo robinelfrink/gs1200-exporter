@@ -34,7 +34,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v6
     - name: Setup Go
-      uses: actions/setup-go@v6.3.0
+      uses: actions/setup-go@v6.4.0
       with:
         go-version-file: 'go.mod'
     - name: Setup Ko
@@ -79,7 +79,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v6
     - name: Setup Go
-      uses: actions/setup-go@v6.3.0
+      uses: actions/setup-go@v6.4.0
       with:
         go-version-file: 'go.mod'
     - name: Build binaries
