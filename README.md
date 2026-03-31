@@ -76,6 +76,59 @@ services:
     ports:
       - 9934:9934
 ```
+## Running with Nix
+
+[![nixpkgs](https://repology.org/badge/version-for-repo/nix_unstable/gs1200-exporter.svg)](https://repology.org/project/gs1200-exporter/versions)
+
+`gs1200-exporter` is available in [nixpkgs](https://github.com/NixOS/nixpkgs).
+
+### Ad-hoc
+```shell
+$ nix run nixpkgs#gs1200-exporter -- --address 192.168.1.3 --password 1234
+```
+
+### Install
+```shell
+$ nix-env -iA nixpkgs.gs1200-exporter
+```
+
+### NixOS
+```nix
+environment.systemPackages = [ pkgs.gs1200-exporter ];
+```
+
+## NixOS Module
+
+A NixOS module is available in nixpkgs for running gs1200-exporter as a systemd service.
+```nix
+services.gs1200-exporter = {
+  enable = true;
+  address = "192.168.1.3";
+  passwordFile = "/run/secrets/gs1200-password";
+};
+```
+
+All available options:
+
+| option         | required | default           | description                                      |
+|----------------|----------|-------------------|--------------------------------------------------|
+| `enable`       | yes      | `false`           | Enable the gs1200-exporter service               |
+| `address`      | yes      | `""`              | IP address or hostname of the GS1200 switch      |
+| `password`     | no       | `null`            | Password in plain text (stored in the Nix store) |
+| `passwordFile` | no       | `null`            | Path to a file containing the password (recommended) |
+| `port`         | no       | `9934`            | Port on which to expose Prometheus metrics       |
+| `debug`        | no       | `false`           | Enable debug logging                             |
+| `verbose`      | no       | `false`           | Enable verbose logging                           |
+| `json`         | no       | `false`           | Output logs in JSON format                       |
+| `user`         | no       | `gs1200-exporter` | User under which the service runs                |
+| `group`        | no       | `gs1200-exporter` | Group under which the service runs               |
+
+Logs are accessible via:
+```shell
+$ journalctl -u gs1200-exporter -f
+```
+
+> **Note:** Either `password` or `passwordFile` must be set, not both. `passwordFile` is recommended as it avoids storing the password in the Nix store. It is compatible with [sops-nix](https://github.com/Mic92/sops-nix) and [agenix](https://github.com/ryantm/agenix).
 
 ## Compatibility
 
