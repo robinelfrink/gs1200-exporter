@@ -26,3 +26,14 @@ jobs:
           days-before-pr-stale: -1
           days-before-pr-close: -1
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+  delete-untagged-images:
+    name: Delete untagged images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          dry-run: true
+          delete-untagged: true
+          delete-tags: test
+          older-than: 1 week
