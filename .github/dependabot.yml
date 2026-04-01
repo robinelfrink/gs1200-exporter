@@ -4,19 +4,19 @@ updates:
   directory: "/"
   schedule:
     interval: "weekly"
-  target-branch: "dev"
+  target-branch: "main"
 - package-ecosystem: "github-actions"
   directory: "/"
   schedule:
     interval: "weekly"
-  target-branch: "dev"
+  target-branch: "main"
 - package-ecosystem: "gomod"
   directory: "/"
   schedule:
     interval: "weekly"
-  target-branch: "dev"
+  target-branch: "main"
 - package-ecosystem: "devcontainers"
   directory: "/"
   schedule:
     interval: "weekly"
-  target-branch: "dev"
+  target-branch: "main"
