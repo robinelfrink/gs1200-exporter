@@ -121,7 +121,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v6
     - name: Fetch short SHA
-      uses: benjlevesque/short-sha@v3.0
+      uses: benjlevesque/short-sha@v4.0
       id: short-sha
     - name: Setup Go
       uses: actions/setup-go@v6.4.0
