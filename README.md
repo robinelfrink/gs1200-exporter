@@ -112,6 +112,3 @@ $ journalctl -u gs1200-exporter -f
 
 This application has been tested with V2.00 firmwares up to V2.00.
 
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=robinelfrink/gs1200-exporter&type=Date)](https://www.star-history.com/#robinelfrink/gs1200-exporter&Date)
