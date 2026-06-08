@@ -77,6 +77,37 @@ services:
       - 9934:9934
 ```
 
+## NixOS Module
+
+[![nixpkgs](https://repology.org/badge/version-for-repo/nix_unstable/gs1200-exporter.svg)](https://repology.org/project/gs1200-exporter/versions)
+
+A NixOS module is available in nixpkgs for running gs1200-exporter as a systemd service.
+```nix
+services.gs1200-exporter = {
+  enable = true;
+  address = "192.168.1.3";
+  port = 9934;
+  passwordFile = "/run/secrets/gs1200-password";
+};
+```
+
+All available options:
+| Option | Required | Default | Description |
+|--------|----------|---------|-------------|
+| `enable` | yes | `false` | Enable the gs1200-exporter service |
+| `address` | yes | | IP address or hostname of the GS1200 switch |
+| `passwordFile` | no | `null` | Path to a file containing the password (recommended) |
+| `port` | no | `9934` | Port on which to expose Prometheus metrics |
+| `debug` | no | `false` | Enable debug logging |
+| `verbose` | no | `false` | Enable verbose logging |
+| `json` | no | `false` | Output logs in JSON format |
+
+Logs are accessible via:
+```shell
+$ journalctl -u gs1200-exporter -f
+```
+> **Note:** `passwordFile` is recommended as it avoids storing the password in the Nix store. It is compatible with [sops-nix](https://github.com/Mic92/sops-nix) and [agenix](https://github.com/ryantm/agenix).
+
 ## Compatibility
 
 This application has been tested with V2.00 firmwares up to V2.00.
