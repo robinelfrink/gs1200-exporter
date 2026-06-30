@@ -39,7 +39,7 @@ jobs:
       with:
         go-version-file: 'go.mod'
     - name: Setup Ko
-      uses: ko-build/setup-ko@v0.9
+      uses: ko-build/setup-ko@v0.10
       with:
         version: v0.18.1
     - name: Build and push containers
