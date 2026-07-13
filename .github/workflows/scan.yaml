@@ -17,30 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     name: Scan container
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-      - name: Setup Go
-        uses: actions/setup-go@v6.5.0
-        with:
-          go-version-file: 'go.mod'
-      - name: Setup Ko
-        uses: ko-build/setup-ko@v0.10
-        with:
-          version: v0.18.1
-      - name: Build containers
-        run: |
-          ko build \
-              --bare \
-              --tags="${{ github.sha }}" \
-              --image-label="org.opencontainers.image.title=${{ github.event.repository.name }}" \
-              --image-label="org.opencontainers.image.description=${{ github.event.repository.description }}" \
-              --image-label="org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
-              --image-label="org.opencontainers.image.revision=${{ github.sha }}" \
-              ./
       - name: Run Trivy
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: "${{ github.repository }}:${{ github.sha }}"
+          image-ref: "ghcr.io/${{ github.repository }}:latest"
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH"
