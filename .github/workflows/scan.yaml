@@ -38,11 +38,10 @@ jobs:
               --image-label="org.opencontainers.image.revision=${{ github.sha }}" \
               ./
       - name: Run Trivy
-        uses: aquasecurity/trivy-action@0.36.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: "ghcr.io/${{ github.repository }}:${{ github.sha }}"
-          format: "template"
-          template: "@/contrib/sarif.tpl"
+          format: "sarif"
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH"
       - name: Upload Trivy scan results to GitHub Security tab
