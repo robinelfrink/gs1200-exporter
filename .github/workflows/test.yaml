@@ -9,6 +9,8 @@ jobs:
   tag:
     name: Calculate next version tag
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.new_tag }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v7
@@ -19,10 +21,17 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         dry_run: true
         custom_release_rules: chore:patch:Chores
+        default_bump: false
+    - name: Exit if no new tag
+      if: '!steps.tag.outputs.new_tag'
+      run: |
+        No new tag. Did you use conventional commits?
+        exit 1
 
   lint:
     name: Lint code
     runs-on: ubuntu-latest
+    needs: tag
     steps:
     - name: Checkout code
       uses: actions/checkout@v7
@@ -36,6 +45,7 @@ jobs:
   test:
     name: Test code
     runs-on: ubuntu-latest
+    needs: tag
     steps:
     - name: Checkout code
       uses: actions/checkout@v7
@@ -51,6 +61,7 @@ jobs:
   analyze:
     name: Analyze code
     runs-on: ubuntu-latest
+    needs: tag
     steps:
     - name: Checkout code
       uses: actions/checkout@v7
