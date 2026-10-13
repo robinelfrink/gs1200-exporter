@@ -108,7 +108,20 @@ $ journalctl -u gs1200-exporter -f
 ```
 > **Note:** `passwordFile` is recommended as it avoids storing the password in the Nix store. It is compatible with [sops-nix](https://github.com/Mic92/sops-nix) and [agenix](https://github.com/ryantm/agenix).
 
+## Grafana dashboard
+
+A ready-made Grafana dashboard is available in
+[`contrib/gs1200-exporter-grafana-dashboard.json`](contrib/gs1200-exporter-grafana-dashboard.json).
+It can be imported to visualize the data exported by this program: switch
+information, a per-port overview (link status, speed, VLANs and packet rates),
+link speed history, per-port and total Rx/Tx packet rates, and the health of the
+exporter itself.
+
+To use it, make sure Prometheus is scraping the exporter, then in Grafana go to
+**Dashboards → New → Import**, upload the JSON file and select your Prometheus
+data source. The `Switch` and `Port` variables at the top of the dashboard
+allow you to select the switch (Prometheus `instance` label) and ports to show.
+
 ## Compatibility
 
 This application has been tested with V2.00 firmwares up to V2.00.
-
